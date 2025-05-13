@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: tv-dhan-webhook
+    env: python
+    plan: free
+    buildCommand: ""
+    startCommand: python webhook_server.py
