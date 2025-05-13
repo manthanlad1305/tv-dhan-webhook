@@ -1,19 +1,50 @@
 from flask import Flask, request, jsonify
+import requests
 
 app = Flask(__name__)
 
-@app.route('/webhook', methods=['POST'])
-def webhook():
+# Replace with your Dhan credentials
+DHAN_ACCESS_TOKEN = "your_access_token_here"
+DHAN_CLIENT_ID = "your_client_id_here"
+
+# Dhan API endpoints
+BASE_URL = "https://api.dhan.co"
+
+def place_order(transaction_type, quantity, symbol, exchange='NSE'):
+    url = f"{BASE_URL}/orders"
+    headers = {
+        "access-token": DHAN_ACCESS_TOKEN,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "securityId": symbol,
+        "transactionType": transaction_type,  # "BUY" or "SELL"
+        "exchangeSegment": exchange,
+        "orderType": "MARKET",
+        "productType": "INTRADAY",
+        "quantity": quantity,
+        "price": 0.0,
+        "disclosedQuantity": 0,
+        "afterMarketOrder": False,
+        "validity": "DAY",
+        "tag": "TV-Auto"
+    }
+    response = requests.post(url, headers=headers, json=payload)
+    print(response.status_code, response.text)
+    return response.json()
+
+@app.route('/', methods=['POST'])
+def webhook_server():
     data = request.json
-    print("Received alert:", data)
+    print("Received webhook:", data)
 
-    action = data.get("action")
-    qty = data.get("qty", 1)
+    signal = data.get('strategy', {}).get('order_action')
+    quantity = int(data.get('strategy', {}).get('order_contracts', 1))
+    symbol = data.get('ticker', 'RELIANCE-EQ')  # Example: "RELIANCE-EQ"
 
-    # Placeholder for Dhan API call
-    print(f"Executing {action.upper()} for quantity {qty}")
-
-    return jsonify({"status": "ok"}), 200
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    if signal == "buy":
+        place_order("BUY", quantity, symbol)
+    elif signal == "sell":
+        place_order("SELL", quantity, symbol)
+    
+    return jsonify({"status": "order received"})
