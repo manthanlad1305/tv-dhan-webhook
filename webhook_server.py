@@ -4,14 +4,16 @@ import os
 
 app = Flask(__name__)
 
-# Read Dhan credentials from environment variables (set these in Render dashboard)
+# Environment variables from Render
 DHAN_ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
 DHAN_CLIENT_ID = os.getenv("DHAN_CLIENT_ID")
 
-# Dhan API base URL
+# Dhan API
 BASE_URL = "https://api.dhan.co"
 
-# Function to place an order
+# In-memory position tracker (for each symbol, if needed)
+net_position = 0
+
 def place_order(transaction_type, quantity, symbol, exchange='NSE'):
     url = f"{BASE_URL}/orders"
     headers = {
@@ -32,27 +34,43 @@ def place_order(transaction_type, quantity, symbol, exchange='NSE'):
         "tag": "TV-Auto"
     }
     response = requests.post(url, headers=headers, json=payload)
-    print(response.status_code, response.text)
+    print(f"Order Response: {response.status_code} - {response.text}")
     return response.json()
 
-# Flask route to handle webhook POST requests
 @app.route('/', methods=['POST'])
 def webhook_server():
+    global net_position
+
     data = request.json
     print("Received webhook:", data)
 
     signal = data.get('strategy', {}).get('order_action')
     quantity = int(data.get('strategy', {}).get('order_contracts', 1))
-    symbol = data.get('ticker', 'RELIANCE-EQ')  # Replace with your default symbol if needed
+    symbol = data.get('ticker', 'RELIANCE-EQ')
+
+    print(f"Signal: {signal}, Quantity: {quantity}, Current Position: {net_position}")
 
     if signal == "buy":
-        place_order("BUY", quantity, symbol)
-    elif signal == "sell":
-        place_order("SELL", quantity, symbol)
-    
-    return jsonify({"status": "order received"})
+        if net_position >= 0:
+            place_order("BUY", quantity, symbol)
+            net_position += quantity
+        else:
+            reversal_qty = abs(net_position) + quantity
+            place_order("BUY", reversal_qty, symbol)
+            net_position = quantity
 
-# Run the Flask app and bind to the port Render provides
+    elif signal == "sell":
+        if net_position <= 0:
+            place_order("SELL", quantity, symbol)
+            net_position -= quantity
+        else:
+            reversal_qty = net_position + quantity
+            place_order("SELL", reversal_qty, symbol)
+            net_position = -quantity
+
+    print(f"New Position: {net_position}")
+    return jsonify({"status": "Order processed", "net_position": net_position})
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
