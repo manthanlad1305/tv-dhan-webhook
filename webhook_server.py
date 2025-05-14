@@ -1,14 +1,17 @@
 from flask import Flask, request, jsonify
 import requests
+import os
+
 app = Flask(__name__)
 
-# Replace with your Dhan credentials
-DHAN_ACCESS_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzQ5Nzg0MDYxLCJ0b2tlbkNvbnN1bWVyVHlwZSI6IlNFTEYiLCJ3ZWJob29rVXJsIjoiIiwiZGhhbkNsaWVudElkIjoiMTEwNzAwMzY0NSJ9.Y2j1F2jkDHeFmzCSMf8gtqqroiZx7msdC1eb8KuMGaj5CRIf138oLXQ6rV40E0n8P-caWfWOZzy62MwrMc3MTQ"
-DHAN_CLIENT_ID = "1107003645"
+# Read Dhan credentials from environment variables (set these in Render dashboard)
+DHAN_ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
+DHAN_CLIENT_ID = os.getenv("DHAN_CLIENT_ID")
 
-# Dhan API endpoints
+# Dhan API base URL
 BASE_URL = "https://api.dhan.co"
 
+# Function to place an order
 def place_order(transaction_type, quantity, symbol, exchange='NSE'):
     url = f"{BASE_URL}/orders"
     headers = {
@@ -32,6 +35,7 @@ def place_order(transaction_type, quantity, symbol, exchange='NSE'):
     print(response.status_code, response.text)
     return response.json()
 
+# Flask route to handle webhook POST requests
 @app.route('/', methods=['POST'])
 def webhook_server():
     data = request.json
@@ -39,7 +43,7 @@ def webhook_server():
 
     signal = data.get('strategy', {}).get('order_action')
     quantity = int(data.get('strategy', {}).get('order_contracts', 1))
-    symbol = data.get('ticker', 'PIRAMAL PHARMA LTD-EQ')  # Example: "RELIANCE-EQ"
+    symbol = data.get('ticker', 'RELIANCE-EQ')  # Replace with your default symbol if needed
 
     if signal == "buy":
         place_order("BUY", quantity, symbol)
@@ -47,3 +51,8 @@ def webhook_server():
         place_order("SELL", quantity, symbol)
     
     return jsonify({"status": "order received"})
+
+# Run the Flask app and bind to the port Render provides
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port)
