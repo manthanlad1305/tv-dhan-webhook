@@ -1,11 +1,10 @@
 from flask import Flask, request, jsonify
 import requests
-
 app = Flask(__name__)
 
 # Replace with your Dhan credentials
-DHAN_ACCESS_TOKEN = "your_access_token_here"
-DHAN_CLIENT_ID = "your_client_id_here"
+DHAN_ACCESS_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzQ5Nzg0MDYxLCJ0b2tlbkNvbnN1bWVyVHlwZSI6IlNFTEYiLCJ3ZWJob29rVXJsIjoiIiwiZGhhbkNsaWVudElkIjoiMTEwNzAwMzY0NSJ9.Y2j1F2jkDHeFmzCSMf8gtqqroiZx7msdC1eb8KuMGaj5CRIf138oLXQ6rV40E0n8P-caWfWOZzy62MwrMc3MTQ"
+DHAN_CLIENT_ID = "1107003645"
 
 # Dhan API endpoints
 BASE_URL = "https://api.dhan.co"
@@ -40,7 +39,7 @@ def webhook_server():
 
     signal = data.get('strategy', {}).get('order_action')
     quantity = int(data.get('strategy', {}).get('order_contracts', 1))
-    symbol = data.get('ticker', 'RELIANCE-EQ')  # Example: "RELIANCE-EQ"
+    symbol = data.get('ticker', 'PIRAMAL PHARMA LTD-EQ')  # Example: "RELIANCE-EQ"
 
     if signal == "buy":
         place_order("BUY", quantity, symbol)
