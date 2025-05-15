@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 # Load credentials from environment variables (Render Dashboard)
 DHAN_ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
-DHAN_CLIENT_ID = os.getenv("DHAN_CLIENT_ID")  # Not used here but available
+DHAN_CLIENT_ID = os.getenv("DHAN_CLIENT_ID")
 
 # Dhan base API endpoint
 BASE_URL = "https://api.dhan.co"
@@ -19,11 +19,12 @@ def place_order(transaction_type, quantity, symbol, exchange='NSE'):
     url = f"{BASE_URL}/orders"
     headers = {
         "access-token": DHAN_ACCESS_TOKEN,
+        "client-id": DHAN_CLIENT_ID,
         "Content-Type": "application/json"
     }
     payload = {
         "securityId": symbol,
-        "transactionType": transaction_type,  # BUY or SELL
+        "transactionType": transaction_type.upper(),  # BUY or SELL
         "exchangeSegment": exchange,
         "orderType": "MARKET",
         "productType": "INTRADAY",
