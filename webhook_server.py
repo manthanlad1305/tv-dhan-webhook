@@ -1,86 +1,85 @@
 from flask import Flask, request, jsonify
 import requests
 import os
-import logging
 
-app = Flask(__name__)
-logging.basicConfig(level=logging.INFO)
+app = Flask(**name**)
 
-# Load credentials from environment variables
-DHAN_ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
-DHAN_CLIENT_ID = os.getenv("DHAN_CLIENT_ID")  # Not used but loaded
+# Load credentials from environment variables (Render Dashboard)
 
-# Check for token presence
-if not DHAN_ACCESS_TOKEN:
-    raise ValueError("Missing DHAN_ACCESS_TOKEN environment variable")
+DHAN\_ACCESS\_TOKEN = os.getenv("DHAN\_ACCESS\_TOKEN")
+DHAN\_CLIENT\_ID = os.getenv("DHAN\_CLIENT\_ID")  # Not used here but available
 
-BASE_URL = "https://api.dhan.co"
-net_position = 0  # Simple state tracker
+# Dhan base API endpoint
 
-def place_order(transaction_type, quantity, symbol, exchange='NSE'):
-    url = f"{BASE_URL}/orders"
-    headers = {
-        "access-token": DHAN_ACCESS_TOKEN,
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "securityId": symbol,
-        "transactionType": transaction_type,
-        "exchangeSegment": exchange,
-        "orderType": "MARKET",
-        "productType": "INTRADAY",
-        "quantity": quantity,
-        "price": 0.0,
-        "disclosedQuantity": 0,
-        "afterMarketOrder": False,
-        "validity": "DAY",
-        "tag": "TV-Auto"
-    }
-    response = requests.post(url, headers=headers, json=payload)
+BASE\_URL = "[https://api.dhan.co](https://api.dhan.co)"
 
-    try:
-        response.raise_for_status()
-        logging.info("Order successful: %s", response.text)
-        return response.json()
-    except requests.exceptions.HTTPError as e:
-        logging.error("Order failed: %s", response.text)
-        return {"error": str(e), "details": response.text}
+# Track net position in-memory (simple for testing)
 
-@app.route('/', methods=['POST'])
-def webhook_server():
-    global net_position
-    data = request.json
-    logging.info("Received webhook: %s", data)
+net\_position = 0
 
-    signal = data.get('strategy', {}).get('order_action')
-    quantity = int(data.get('strategy', {}).get('order_contracts', 1))
+def place\_order(transaction\_type, quantity, symbol, exchange='NSE'):
+"""Send order request to Dhan"""
+url = f"{BASE\_URL}/orders"
+headers = {
+"access-token": DHAN\_ACCESS\_TOKEN,
+"Content-Type": "application/json"
+}
+payload = {
+"securityId": symbol,
+"transactionType": transaction\_type,  # BUY or SELL
+"exchangeSegment": exchange,
+"orderType": "MARKET",
+"productType": "INTRADAY",
+"quantity": quantity,
+"price": 0.0,
+"disclosedQuantity": 0,
+"afterMarketOrder": False,
+"validity": "DAY",
+"tag": "TV-Auto"
+}
+response = requests.post(url, headers=headers, json=payload)
+print(f"Order Response: {response.status\_code} - {response.text}")
+return response.json()
 
-    tv_ticker = data.get('ticker', 'NSE:RELIANCE')
-    symbol_base = tv_ticker.split(':')[-1] if ':' in tv_ticker else tv_ticker
-    symbol = symbol_base + '-EQ'
+@app.route('/', methods=\['POST'])
+def webhook\_server():
+global net\_position
 
-    logging.info("Signal: %s, Quantity: %d, Symbol: %s, Current Position: %d", signal, quantity, symbol, net_position)
+```
+data = request.json
+print("Received webhook:", data)
 
-    if signal == "buy":
-        if net_position >= 0:
-            place_order("BUY", quantity, symbol)
-            net_position += quantity
-        else:
-            reversal_qty = abs(net_position) + quantity
-            place_order("BUY", reversal_qty, symbol)
-            net_position = quantity
+# Get signal and quantity safely
+signal = data.get('strategy', {}).get('order_action')
+quantity = int(data.get('strategy', {}).get('order_contracts', 1))
 
-    elif signal == "sell":
-        if net_position <= 0:
-            place_order("SELL", quantity, symbol)
-            net_position -= quantity
-        else:
-            reversal_qty = net_position + quantity
-            place_order("SELL", reversal_qty, symbol)
-            net_position = -quantity
+# Convert TradingView symbol like "NSE:RELIANCE" → "RELIANCE-EQ"
+tv_ticker = data.get('ticker', 'NSE:RELIANCE')
+symbol = tv_ticker.split(':')[-1] + '-EQ'
+
+print(f"Signal: {signal}, Quantity: {quantity}, Symbol: {symbol}, Current Position: {net_position}")
+
+if signal == "buy":
+    if net_position >= 0:
+        place_order("BUY", quantity, symbol)
+        net_position += quantity
     else:
-        logging.warning("Invalid or missing signal.")
-        return jsonify({"error": "Invalid signal"}), 400
+        reversal_qty = abs(net_position) + quantity
+        place_order("BUY", reversal_qty, symbol)
+        net_position = quantity
 
-    logging.info("New Position: %d", net_position)
-    return jsonify({"status": "Order processed", "net_position": net_position})
+elif signal == "sell":
+    if net_position <= 0:
+        place_order("SELL", quantity, symbol)
+        net_position -= quantity
+    else:
+        reversal_qty = net_position + quantity
+        place_order("SELL", reversal_qty, symbol)
+        net_position = -quantity
+else:
+    print("Invalid or missing signal.")
+    return jsonify({"error": "Invalid signal"}), 400
+
+print(f"New Position: {net_position}")
+return jsonify({"status": "Order processed", "net_position": net_position})
+```
