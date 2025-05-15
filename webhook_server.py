@@ -78,7 +78,3 @@ def webhook_server():
 
     print(f"New Position: {net_position}")
     return jsonify({"status": "Order processed", "net_position": net_position})
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 10000))
-    app.run(host='0.0.0.0', port=port)
