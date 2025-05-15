@@ -4,17 +4,18 @@ import os
 
 app = Flask(__name__)
 
-# Environment variables from Render
+# Load credentials from environment variables (Render Dashboard)
 DHAN_ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
-DHAN_CLIENT_ID = os.getenv("DHAN_CLIENT_ID")
+DHAN_CLIENT_ID = os.getenv("DHAN_CLIENT_ID")  # Not used here but available
 
-# Dhan API
+# Dhan base API endpoint
 BASE_URL = "https://api.dhan.co"
 
-# In-memory position tracker (for each symbol, if needed)
+# Track net position in-memory (simple for testing)
 net_position = 0
 
 def place_order(transaction_type, quantity, symbol, exchange='NSE'):
+    """Send order request to Dhan"""
     url = f"{BASE_URL}/orders"
     headers = {
         "access-token": DHAN_ACCESS_TOKEN,
@@ -22,7 +23,7 @@ def place_order(transaction_type, quantity, symbol, exchange='NSE'):
     }
     payload = {
         "securityId": symbol,
-        "transactionType": transaction_type,  # "BUY" or "SELL"
+        "transactionType": transaction_type,  # BUY or SELL
         "exchangeSegment": exchange,
         "orderType": "MARKET",
         "productType": "INTRADAY",
@@ -44,11 +45,15 @@ def webhook_server():
     data = request.json
     print("Received webhook:", data)
 
+    # Get signal and quantity safely
     signal = data.get('strategy', {}).get('order_action')
     quantity = int(data.get('strategy', {}).get('order_contracts', 1))
-    symbol = data.get('ticker', 'RELIANCE-EQ')
 
-    print(f"Signal: {signal}, Quantity: {quantity}, Current Position: {net_position}")
+    # Convert TradingView symbol like "NSE:RELIANCE" → "RELIANCE-EQ"
+    tv_ticker = data.get('ticker', 'NSE:RELIANCE')
+    symbol = tv_ticker.split(':')[-1] + '-EQ'
+
+    print(f"Signal: {signal}, Quantity: {quantity}, Symbol: {symbol}, Current Position: {net_position}")
 
     if signal == "buy":
         if net_position >= 0:
@@ -67,6 +72,9 @@ def webhook_server():
             reversal_qty = net_position + quantity
             place_order("SELL", reversal_qty, symbol)
             net_position = -quantity
+    else:
+        print("Invalid or missing signal.")
+        return jsonify({"error": "Invalid signal"}), 400
 
     print(f"New Position: {net_position}")
     return jsonify({"status": "Order processed", "net_position": net_position})
