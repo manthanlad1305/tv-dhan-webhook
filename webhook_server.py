@@ -51,7 +51,7 @@ def webhook_server():
     quantity = int(data.get('strategy', {}).get('order_contracts', 1))
 
     # Convert TradingView symbol like "NSE:RELIANCE" → "RELIANCE-EQ"
-    tv_ticker = data.get('ticker', 'NSE:RELIANCE')
+    tv_ticker = data.get('ticker', 'NSE:PPLPHARMA')
     symbol = tv_ticker.split(':')[-1] + '-EQ'
 
     print(f"Signal: {signal}, Quantity: {quantity}, Symbol: {symbol}, Current Position: {net_position}")
