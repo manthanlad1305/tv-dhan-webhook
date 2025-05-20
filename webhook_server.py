@@ -25,7 +25,7 @@ def place_order(transaction_type, quantity, symbol, exchange='NSE'):
     payload = {
         "securityId": symbol,
         "transactionType": transaction_type.upper(),  # BUY or SELL
-        "exchangeSegment": "exchange",
+        "exchangeSegment": "NSE_EQ",
         "orderType": "MARKET",
         "productType": "INTRADAY",
         "quantity": quantity,
