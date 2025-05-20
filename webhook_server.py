@@ -16,7 +16,6 @@ net_position = 0
 
 def place_order(transaction_type, quantity, symbol, exchange='NSE'): 
     """Send order request to Dhan"""
-    print(DHAN_ACCESS_TOKEN)
     url = f"{BASE_URL}/orders"
     headers = {
         "access-token": DHAN_ACCESS_TOKEN,
