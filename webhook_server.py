@@ -15,6 +15,7 @@ BASE_URL = "https://api.dhan.co"
 net_position = 0
 
 def place_order(transaction_type, quantity, symbol, exchange='NSE'):
+   print(DHAN_ACCESS_TOKEN) 
     """Send order request to Dhan"""
     url = f"{BASE_URL}/orders"
     headers = {
