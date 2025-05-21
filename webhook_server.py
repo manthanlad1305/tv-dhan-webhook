@@ -19,10 +19,11 @@ def place_order(transaction_type, quantity, symbol, exchange='NSE'):
     url = f"{BASE_URL}/orders"
     headers = {
         "access-token": DHAN_ACCESS_TOKEN,
-        "client-id": DHAN_CLIENT_ID,
+       """ "client-id": DHAN_CLIENT_ID,  """
         "Content-Type": "application/json"
     }
     payload = {
+        "dhanClientId": DHAN_CLIENT_ID,
         "securityId": symbol,
         "transactionType": transaction_type.upper(),  # BUY or SELL
         "exchangeSegment": "NSE_EQ",
