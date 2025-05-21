@@ -80,10 +80,10 @@ def webhook_server():
             reversal_qty = net_position + quantity
             place_order("SELL", reversal_qty, symbol)
             net_position = -quantity
-    else:
+    """else:
         print("in last else")
         print("Invalid or missing signal.")
-        return jsonify({"error": "Invalid signal"}), 400
+        return jsonify({"error": "Invalid signal"}), 400 """
 
     print(f"New Position: {net_position}")
     return jsonify({"status": "Order processed", "net_position": net_position})
