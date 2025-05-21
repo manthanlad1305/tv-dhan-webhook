@@ -56,7 +56,7 @@ def webhook_server():
 
     print(f"Signal: {signal}, Quantity: {quantity}, Symbol: {symbol}, Current Position: {net_position}")
 
-    if signal == "buy":
+    if signal == "BUY":
         if net_position >= 0:
             place_order("BUY", quantity, symbol)
             net_position += quantity
@@ -65,7 +65,7 @@ def webhook_server():
             place_order("BUY", reversal_qty, symbol)
             net_position = quantity
 
-    elif signal == "sell":
+    elif signal == "SELL":
         if net_position <= 0:
             place_order("SELL", quantity, symbol)
             net_position -= quantity
