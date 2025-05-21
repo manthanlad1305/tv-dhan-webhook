@@ -58,23 +58,30 @@ def webhook_server():
     print(f"Signal: {signal}, Quantity: {quantity}, Symbol: {symbol}, Current Position: {net_position}")
 
     if signal == "BUY":
+        print("In first IF")
         if net_position >= 0:
+            print("In net_position if")
             place_order("BUY", quantity, symbol)
             net_position += quantity
         else:
+            print("In first else")
             reversal_qty = abs(net_position) + quantity
             place_order("BUY", reversal_qty, symbol)
             net_position = quantity
 
     elif signal == "SELL":
+        print("In sell if")
         if net_position <= 0:
+            print("In sell second if")
             place_order("SELL", quantity, symbol)
             net_position -= quantity
         else:
+            print("in last second if")
             reversal_qty = net_position + quantity
             place_order("SELL", reversal_qty, symbol)
             net_position = -quantity
     else:
+        print("in last else")
         print("Invalid or missing signal.")
         return jsonify({"error": "Invalid signal"}), 400
 
